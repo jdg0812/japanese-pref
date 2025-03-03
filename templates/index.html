@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mo's Travels</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+
+        }
+
+        .main {
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            display: none;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            font-size: 50px;
+            color: #003049;
+            position: absolute;
+            left: 20px;
+
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main" style="background-color: #669bbc;">
+        <h1>Mo's Japan Travels</h1>
+        <object id="mySVG" type="image/svg+xml" data="{{ url_for('static', filename='images/japan.svg') }}" width="100%"
+            height="100%">
+        </object>
+    </div>
+    <div id="tooltip" class="tooltip"></div>
+
+
+    <script>
+        const svgObject = document.getElementById('mySVG');
+
+        svgObject.addEventListener('load', function () {
+            const svgDoc = svgObject.contentDocument;
+            const beenToIds = {{ visited | tojson
+        }};
+
+        if (svgDoc) {
+            const svg = svgDoc.querySelector('svg');
+
+            if (svg) {
+                svgDoc.querySelectorAll('path').forEach(path => {
+                    path.setAttribute('stroke', '#003049');
+                    path.setAttribute('stroke-width', '0.5');
+                })
+                svg.querySelectorAll('*').forEach(function (elem) {
+                    if (elem.id && beenToIds.includes(elem.id)) {
+                        elem.setAttribute('fill', '#c1121f');
+                    }
+                    else {
+                        elem.setAttribute('fill', '#fdf0d5');
+                    }
+                });
+            }
+        }
+        });
+    </script>
+    <script>
+        const idTitleMap = {{ id_title_map | tojson }};
+        const tooltip = document.getElementById('tooltip');
+
+        svgObject.addEventListener('load', function () {
+            const svgDoc = svgObject.contentDocument;
+
+            if (svgDoc) {
+                svgDoc.querySelectorAll('*').forEach(function (elem) {
+                    if (elem.id && idTitleMap[elem.id]) {
+                        elem.addEventListener('mouseenter', function (event) {
+                            tooltip.innerText = idTitleMap[elem.id];
+                            tooltip.style.display = 'block';
+                        });
+
+                        elem.addEventListener('mousemove', function (event) {
+                            tooltip.style.left = event.pageX + 10 + 'px';
+                            tooltip.style.top = event.pageY + 10 + 'px';
+                        });
+
+                        elem.addEventListener('mouseleave', function () {
+                            tooltip.style.display = 'none';
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+
+</html>
