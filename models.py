@@ -22,3 +22,25 @@ class Japan(db.Model):
             "date": self.date,
         }
  
+
+# import pandas as pd
+
+# df = pd.read_excel('Untitled spreadsheet.xlsx')
+# with app.app_context():
+#     db.session.query(Japan).delete()
+#     prefectures = []  # Initialize an empty list
+
+#     for index, row in df.iterrows():
+#         prefectures.append({
+#             "id": row["ID"],
+#             "name": row["TITLE"],
+#             "have_been": row["HAVE_BEEN"],
+#         })
+
+#     print(prefectures)
+
+#     for p in prefectures:
+#         new_prefecture = Japan(id=p["id"], name=p["name"], have_been=p["have_been"])
+#         db.session.add(new_prefecture)
+    
+#     db.session.commit()  # Save changes

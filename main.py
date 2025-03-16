@@ -1,6 +1,7 @@
-from flask import Flask, request, jsonify, render_template, url_for
+from flask import Flask, request, jsonify, render_template, url_for, redirect
 from flask_sqlalchemy import SQLAlchemy
 from models import Japan, db, app
+from datetime import datetime
 
 @app.route('/')
 def index():
@@ -15,6 +16,28 @@ def get_japan():
     japan_json = list(map(lambda x: x.to_json(),japan))
     return jsonify({"transactions": japan_json})
 
+
+
+@app.route('/update_japan/<string:id>', methods=['POST'])
+def update_japan(id):
+    prefecture = Japan.query.get(id)
+    if not prefecture:
+        return jsonify({"message": "Transaction not found"}), 404
+
+    date_value = request.form['date']
+    if date_value:
+        prefecture.date = datetime.strptime(request.form['date'], '%Y-%m-%d').date()
+    else:
+        prefecture.date = None
+    prefecture.have_been = request.form['have_been'].upper()
+    
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        return jsonify({"message": str(e)}), 400
+
+    return redirect("/#container")
 
 # # Fetch Prefecture Data from DB
 # def get_prefecture_data():

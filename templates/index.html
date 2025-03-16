@@ -5,93 +5,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mo's Travels</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
-
-        .main {
-            width: 100vw;
-            height: 80vh;
-            background-color: #669bbc;
-            position: relative;
-        }
-
-        .tooltip {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.8);
-            color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 14px;
-            display: none;
-            pointer-events: none;
-        }
-
-        h1 {
-            font-size: 50px;
-            color: #003049;
-            position: absolute;
-            left: 20px;
-        }
-
-        /* Search & Table Styling */
-        .container {
-            width: 90%;
-            margin: 20px auto;
-            text-align: center;
-        }
-
-        input {
-            padding: 10px;
-            width: 300px;
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-
-        th,
-        td {
-            border: 1px solid black;
-            padding: 10px;
-            text-align: left;
-        }
-
-        button {
-            padding: 5px 10px;
-            background-color: #003049;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #c1121f;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/styles.css') }}">
 </head>
 
 <body>
     <div class="main">
-        <h1>Mo's Japan Travels</h1>
+        <h1>Mo's Travels</h1>
+        <p><a href='#container'>Edit</a></p>
         <object id="mySVG" type="image/svg+xml" data="{{ url_for('static', filename='images/japan.svg') }}" width="100%"
             height="100%"></object>
     </div>
 
     <div id="tooltip" class="tooltip"></div>
 
-    <!-- Search and Update Prefecture Table -->
-    <div class="container">
+
+    <div class="container" id="container">
         <h2>Update Visited Prefectures</h2>
 
-        <table>
+        <input type="text" id="searchInput" placeholder="Search for a prefecture..." onkeyup="searchTable()">
+
+        <table id="prefectureTable">
             <thead>
                 <tr>
                     <th>Prefecture</th>
@@ -107,7 +40,10 @@
                     <td>{{ prefecture.have_been }}</td>
                     <td>{{ prefecture.date }}</td>
                     <td>
-                        <button>Update</button>
+                        <button
+                            onclick="openModal('{{ prefecture.id }}', '{{ prefecture.name }}', '{{ prefecture.have_been }}', '{{ prefecture.date }}')">
+                            Update
+                        </button>
                     </td>
 
                 </tr>
@@ -115,61 +51,116 @@
             </tbody>
         </table>
     </div>
+    <div id="updateModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2>Update Visited Prefecture</h2>
+            <form id="updateForm" method="POST">
+                <input type="hidden" name="id" id="updateId">
+                <input type="hidden" name="name" id="updateName">
+                <label for="have_been">Visited YES/NO</label>
+                <input type="text" name="have_been" id="updateHaveBeen">
+                <br>
+                <label for="date">Date</label>
+                <input type="date" name="date" id="updateDate">
+                <br>
+                <button type="submit">Save Changes</button>
+            </form>
+        </div>
 
-    <script>
-        const svgObject = document.getElementById('mySVG');
-        const tooltip = document.getElementById('tooltip');
+        <script>
 
-        const visitedPrefectures = {{ visited | tojson }};
-        const idTitleMap = {{ id_title_map | tojson }};
+            const svgObject = document.getElementById('mySVG');
+            const tooltip = document.getElementById('tooltip');
 
-        svgObject.addEventListener('load', function () {
-            const svgDoc = svgObject.contentDocument;
-            if (svgDoc) {
-                const svg = svgDoc.querySelector('svg');
-                svg.querySelectorAll('path').forEach(path => {
-                    path.setAttribute('stroke', '#003049');
-                    path.setAttribute('stroke-width', '0.5');
-                });
+            const visitedPrefectures = {{ visited | tojson }};
+            const idTitleMap = {{ id_title_map | tojson }};
 
-                svg.querySelectorAll('*').forEach(elem => {
-                    if (elem.id && visitedPrefectures.includes(elem.id)) {
-                        elem.setAttribute('fill', '#c1121f');
-                    } else {
-                        elem.setAttribute('fill', '#fdf0d5');
-                    }
-                });
+            svgObject.addEventListener('load', function () {
+                const svgDoc = svgObject.contentDocument;
+                if (svgDoc) {
+                    const svg = svgDoc.querySelector('svg');
+                    svg.querySelectorAll('path').forEach(path => {
+                        path.setAttribute('stroke', '#003049');
+                        path.setAttribute('stroke-width', '0.5');
+                    });
 
-                svg.querySelectorAll('*').forEach(elem => {
-                    if (elem.id && idTitleMap[elem.id]) {
-                        elem.addEventListener('mouseenter', event => {
-                            tooltip.innerText = idTitleMap[elem.id];
-                            tooltip.style.display = 'block';
-                        });
+                    svg.querySelectorAll('*').forEach(elem => {
+                        if (elem.id && visitedPrefectures.includes(elem.id)) {
+                            elem.setAttribute('fill', '#c1121f');
+                        } else {
+                            elem.setAttribute('fill', '#fdf0d5');
+                        }
+                    });
 
-                        elem.addEventListener('mousemove', event => {
-                            tooltip.style.left = event.pageX + 10 + 'px';
-                            tooltip.style.top = event.pageY + 10 + 'px';
-                        });
+                    svg.querySelectorAll('*').forEach(elem => {
+                        if (elem.id && idTitleMap[elem.id]) {
+                            elem.addEventListener('mouseenter', event => {
+                                tooltip.innerText = idTitleMap[elem.id];
+                                tooltip.style.display = 'block';
+                            });
 
-                        elem.addEventListener('mouseleave', () => {
-                            tooltip.style.display = 'none';
-                        });
-                    }
-                });
+                            elem.addEventListener('mousemove', event => {
+                                tooltip.style.left = event.pageX + 10 + 'px';
+                                tooltip.style.top = event.pageY + 10 + 'px';
+                            });
+
+                            elem.addEventListener('mouseleave', () => {
+                                tooltip.style.display = 'none';
+                            });
+                        }
+                    });
+                }
+            });
+
+            // Function to update the SVG color
+            function updateSVGColor(id) {
+                const svgDoc = svgObject.contentDocument;
+                if (svgDoc) {
+                    const elem = svgDoc.getElementById(id);
+                    if (elem) elem.setAttribute('fill', '#c1121f');
+                }
             }
-        });
 
-        // Function to update the SVG color
-        function updateSVGColor(id) {
-            const svgDoc = svgObject.contentDocument;
-            if (svgDoc) {
-                const elem = svgDoc.getElementById(id);
-                if (elem) elem.setAttribute('fill', '#c1121f');
+            // function for the update textbox
+            function openModal(id, name, have_been, date) {
+                document.getElementById("updateId").value = id;
+                document.getElementById("updateName").value = name;
+                document.getElementById("updateHaveBeen").value = have_been;
+                document.getElementById("updateDate").value = date;
+
+
+                document.getElementById("updateForm").action = "/update_japan/" + id;
+                document.getElementById("updateModal").style.display = "block";
             }
-        }
 
-    </script>
+            function closeModal() {
+                document.getElementById("updateModal").style.display = "none";
+            }
+
+
+            function searchTable() {
+                let input = document.getElementById("searchInput").value.toLowerCase();
+                let table = document.getElementById("prefectureTable");
+                let rows = table.getElementsByTagName("tr");
+
+                for (let i = 1; i < rows.length; i++) {
+                    let firstCell = rows[i].getElementsByTagName("td")[0];
+                    if (firstCell) {
+                        let textValue = firstCell.textContent || firstCell.innerText;
+                        if (textValue.toLowerCase().indexOf(input) > -1) {
+                            rows[i].style.display = "";
+                        } else {
+                            rows[i].style.display = "none";
+                        }
+                    }
+                }
+            }
+
+
+        </script>
+
+
 </body>
 
 </html>
