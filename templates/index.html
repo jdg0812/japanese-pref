@@ -9,12 +9,14 @@
         body {
             margin: 0;
             padding: 0;
-
+            font-family: Arial, sans-serif;
         }
 
         .main {
             width: 100vw;
-            height: 100vh;
+            height: 80vh;
+            background-color: #669bbc;
+            position: relative;
         }
 
         .tooltip {
@@ -29,82 +31,144 @@
         }
 
         h1 {
-            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
             font-size: 50px;
             color: #003049;
             position: absolute;
             left: 20px;
+        }
 
+        /* Search & Table Styling */
+        .container {
+            width: 90%;
+            margin: 20px auto;
+            text-align: center;
+        }
 
+        input {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 10px;
+            text-align: left;
+        }
+
+        button {
+            padding: 5px 10px;
+            background-color: #003049;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #c1121f;
         }
     </style>
 </head>
 
 <body>
-    <div class="main" style="background-color: #669bbc;">
+    <div class="main">
         <h1>Mo's Japan Travels</h1>
         <object id="mySVG" type="image/svg+xml" data="{{ url_for('static', filename='images/japan.svg') }}" width="100%"
-            height="100%">
-        </object>
+            height="100%"></object>
     </div>
+
     <div id="tooltip" class="tooltip"></div>
 
+    <!-- Search and Update Prefecture Table -->
+    <div class="container">
+        <h2>Update Visited Prefectures</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Prefecture</th>
+                    <th>Visited</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prefecture in japan %}
+                <tr>
+                    <td>{{ prefecture.name }}</td>
+                    <td>{{ prefecture.have_been }}</td>
+                    <td>{{ prefecture.date }}</td>
+                    <td>
+                        <button>Update</button>
+                    </td>
+
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <script>
         const svgObject = document.getElementById('mySVG');
+        const tooltip = document.getElementById('tooltip');
+
+        const visitedPrefectures = {{ visited | tojson }};
+        const idTitleMap = {{ id_title_map | tojson }};
 
         svgObject.addEventListener('load', function () {
             const svgDoc = svgObject.contentDocument;
-            const beenToIds = {{ visited | tojson
-        }};
-
-        if (svgDoc) {
-            const svg = svgDoc.querySelector('svg');
-
-            if (svg) {
-                svgDoc.querySelectorAll('path').forEach(path => {
+            if (svgDoc) {
+                const svg = svgDoc.querySelector('svg');
+                svg.querySelectorAll('path').forEach(path => {
                     path.setAttribute('stroke', '#003049');
                     path.setAttribute('stroke-width', '0.5');
-                })
-                svg.querySelectorAll('*').forEach(function (elem) {
-                    if (elem.id && beenToIds.includes(elem.id)) {
+                });
+
+                svg.querySelectorAll('*').forEach(elem => {
+                    if (elem.id && visitedPrefectures.includes(elem.id)) {
                         elem.setAttribute('fill', '#c1121f');
-                    }
-                    else {
+                    } else {
                         elem.setAttribute('fill', '#fdf0d5');
                     }
                 });
-            }
-        }
-        });
-    </script>
-    <script>
-        const idTitleMap = {{ id_title_map | tojson }};
-        const tooltip = document.getElementById('tooltip');
 
-        svgObject.addEventListener('load', function () {
-            const svgDoc = svgObject.contentDocument;
-
-            if (svgDoc) {
-                svgDoc.querySelectorAll('*').forEach(function (elem) {
+                svg.querySelectorAll('*').forEach(elem => {
                     if (elem.id && idTitleMap[elem.id]) {
-                        elem.addEventListener('mouseenter', function (event) {
+                        elem.addEventListener('mouseenter', event => {
                             tooltip.innerText = idTitleMap[elem.id];
                             tooltip.style.display = 'block';
                         });
 
-                        elem.addEventListener('mousemove', function (event) {
+                        elem.addEventListener('mousemove', event => {
                             tooltip.style.left = event.pageX + 10 + 'px';
                             tooltip.style.top = event.pageY + 10 + 'px';
                         });
 
-                        elem.addEventListener('mouseleave', function () {
+                        elem.addEventListener('mouseleave', () => {
                             tooltip.style.display = 'none';
                         });
                     }
                 });
             }
         });
+
+        // Function to update the SVG color
+        function updateSVGColor(id) {
+            const svgDoc = svgObject.contentDocument;
+            if (svgDoc) {
+                const elem = svgDoc.getElementById(id);
+                if (elem) elem.setAttribute('fill', '#c1121f');
+            }
+        }
+
     </script>
 </body>
 
